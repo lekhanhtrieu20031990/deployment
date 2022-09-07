@@ -21,10 +21,11 @@ env:
   SERVICE_NAME: api
   SECRET_K8S_NAME: api
   SECRET_GCP_NAME: staging-api
+
 jobs:
   
   create-secret-service:
-    needs: setup-build-push-image
+    # needs: setup-build-push-image
     runs-on: ubuntu-latest
 
     steps:
