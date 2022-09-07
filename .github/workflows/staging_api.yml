@@ -1,0 +1,48 @@
+name: Build and Deploy API to GKE on staging
+
+on:
+  workflow_call:
+    inputs:
+      # pass in environment through manual trigger, if not passed in, default to 'dev'
+      env:
+        required: true
+        type: string
+        default: 'dev'
+#authen: gcloud --quiet auth configure-docker
+#gcloud auth print-access-token | helm registry login -u oauth2accesstoken --password-stdin https://asia-southeast1-docker.pkg.dev 
+
+env:
+  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  GKE_CLUSTER: infina-staging-gke-cluster    # TODO: update to cluster name
+  GCR_NAME: infina-registry
+  GKE_ZONE: asia-southeast1   # TODO: update to cluster zone
+  IMAGE: api
+  ENVIRONMENT: staging
+  SERVICE_NAME: api
+  SECRET_K8S_NAME: api
+  SECRET_GCP_NAME: staging-api
+jobs:
+  
+  create-secret-service:
+    needs: setup-build-push-image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # Setup gcloud CLI
+      - uses: google-github-actions/setup-gcloud@94337306dda8180d967a56932ceb4ddcf01edae7
+        with:
+          service_account_key: ${{ secrets.GKE_SA_KEY }}
+          project_id: ${{ secrets.GKE_PROJECT }}
+         # Get the GKE credentials so we can deploy to the cluster
+
+      - uses: google-github-actions/get-gke-credentials@fb08709ba27618c31c09e014e1d8364b02e5042e
+        with:
+          cluster_name: ${{ env.GKE_CLUSTER }}
+          location: ${{ env.GKE_ZONE }}
+          credentials: ${{ secrets.GKE_SA_KEY }}    
+
+
+  
